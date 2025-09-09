@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Global cursor styles for clickable elements */
+button:not([disabled]),
+a[href],
+[role="button"],
+input[type="button"],
+input[type="submit"],
+summary,
+.clickable {
+  cursor: pointer;
+}
+
+button[disabled],
+[aria-disabled="true"],
+.disabled {
+  cursor: not-allowed;
+}
