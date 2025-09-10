@@ -36,7 +36,10 @@ export const ItemDetailView: React.FC<{ id: string; goBack: () => void }> = ({ i
         <ul className="space-y-1">
           {myRequests.map((r) => (
             <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <span>{r.memberName} × {r.quantity}</span>
+              <span>
+                {r.memberName} × {r.quantity}
+                <span className="ml-2 text-xs opacity-70">{new Date(r.createdAt).toLocaleDateString()}</span>
+              </span>
               {(isLeader || (session?.user?.id && r.requesterId === session.user.id)) ? (
                 <button className="inline-flex items-center gap-1 rounded-md border border-transparent bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-500" onClick={() => removeRequest(r.id)}>Remove</button>
               ) : null}
@@ -87,4 +90,3 @@ export const ItemDetailView: React.FC<{ id: string; goBack: () => void }> = ({ i
     </div>
   );
 };
-
