@@ -3,7 +3,6 @@ import { LootProvider, useLoot } from './features/loot/store';
 import { AuthProvider, useAuth } from './features/auth/store';
 import { TopBar } from './components/TopBar';
 import { ItemsView } from './features/items/ItemsView';
-import { ItemDetailView } from './features/items/ItemDetailView';
 import { SummaryView } from './features/summary/SummaryView';
 import { AdminView } from './features/admin/AdminView';
 import { computeSplit } from './features/loot/logic';
@@ -38,9 +37,8 @@ const Shell: React.FC = () => {
       <TopBar setView={setView} />
       <main className="mx-auto max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
         {view.name === 'items' && (
-          <ItemsView openItem={(id) => setView({ name: 'item', id })} />
+          <ItemsView />
         )}
-        {view.name === 'item' && <ItemDetailView id={view.id} goBack={() => setView({ name: 'items' })} />}
         {view.name === 'summary' && <SummaryView />}
         {view.name === 'admin' && <AdminView />}
       </main>
