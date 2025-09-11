@@ -10,8 +10,8 @@ export const TopBar: React.FC<{ setView: (v: View) => void }> = ({ setView }) =>
     <header className="sticky top-0 z-40 w-full border-b border-gray-800 bg-gray-900/80 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-3 text-gray-100 sm:px-4 lg:px-6">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold">DS</span>
-          <span className="text-sm font-semibold tracking-tight">DropSplit</span>
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold">WP</span>
+          <span className="text-sm font-semibold tracking-tight">WarPigs Loot Manager</span>
         </div>
         <nav className="ml-auto flex items-center gap-1">
           <Button variant="ghost" onClick={() => setView({ name: 'items' })} className="text-sm text-gray-300 hover:text-white">Items</Button>

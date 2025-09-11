@@ -43,7 +43,6 @@ const Shell: React.FC = () => {
         {view.name === 'item' && <ItemDetailView id={view.id} goBack={() => setView({ name: 'items' })} />}
         {view.name === 'summary' && <SummaryView />}
         {view.name === 'admin' && <AdminView />}
-        <footer className="mt-10 text-center text-xs opacity-70">Data is stored in Supabase for your project.</footer>
       </main>
       </>
       )}
