@@ -47,3 +47,4 @@ This repository hosts a small Vite + React app for organizing Lineage 2 raid bos
 ## Agent-Specific Notes
 - When modifying files, follow feature-first layout under `src/features/loot/`.
 - Do not alter unrelated code or tooling without an issue/discussion.
+ - Never commit or push changes without explicit user approval. Always pause and ask before any `git commit` or `git push`.

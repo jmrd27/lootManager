@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { LootProvider, useLoot } from './features/loot/store';
 import { AuthProvider, useAuth } from './features/auth/store';
 import { TopBar } from './components/TopBar';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { ItemsView } from './features/items/ItemsView';
 import { ItemDetailView } from './features/items/ItemDetailView';
 import { SummaryView } from './features/summary/SummaryView';
@@ -57,13 +59,12 @@ const AuthInline: React.FC = () => {
   };
   return (
     <form onSubmit={submit} className="mb-4 flex w-full flex-wrap items-center gap-2 sm:w-auto">
-      <input className="min-w-[160px] flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <input className="min-w-[160px] flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-transparent bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-500" type="submit">{mode === 'signin' ? 'Sign in' : 'Sign up'}</button>
-      <button type="button" className="text-sm underline opacity-80" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
+      <Input className="min-w-[160px] flex-1" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+      <Input className="min-w-[160px] flex-1" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Button disabled={busy} type="submit">{mode === 'signin' ? 'Sign in' : 'Sign up'}</Button>
+      <Button type="button" variant="link" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
         {mode === 'signin' ? 'Create account' : 'Have an account? Sign in'}
-      </button>
+      </Button>
     </form>
   );
 };
-

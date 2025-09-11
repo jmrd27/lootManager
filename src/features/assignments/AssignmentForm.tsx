@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export const AssignmentForm: React.FC<{ remaining: number; suggestNames: string[]; onAssign: (p: { name: string; qty: number }) => void }>
   = ({ remaining, suggestNames, onAssign }) => {
@@ -18,8 +20,7 @@ export const AssignmentForm: React.FC<{ remaining: number; suggestNames: string[
   return (
     <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2">
       <div className="relative min-w-[200px] flex-1">
-        <input
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800"
+        <Input
           placeholder="Member name"
           value={name}
           onChange={(e) => { setName(e.target.value); setOpen(true); }}
@@ -37,9 +38,8 @@ export const AssignmentForm: React.FC<{ remaining: number; suggestNames: string[
           </div>
         )}
       </div>
-      <input className="w-28 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800" type="number" min={1} max={remaining} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
-      <button disabled={remaining <= 0} className="inline-flex items-center gap-1 rounded-md border border-transparent bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-500 disabled:opacity-60" type="submit">Assign</button>
+      <Input className="w-28" type="number" min={1} max={remaining} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
+      <Button disabled={remaining <= 0} type="submit">Assign</Button>
     </form>
   );
 };
-

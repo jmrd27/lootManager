@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useLoot } from '@/features/loot/store';
 import { useAuth } from '@/features/auth/store';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const ItemsView: React.FC<{ openItem: (id: string) => void }> = ({ openItem }) => {
   const { items, addItem, removeItem, requests, addRequest } = useLoot();
@@ -32,7 +35,7 @@ export const ItemsView: React.FC<{ openItem: (id: string) => void }> = ({ openIt
       {isLeader && (
         <form onSubmit={onAdd} className="mb-4 flex flex-wrap gap-2">
           <div className="relative min-w-[200px] flex-1">
-            <input className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800" placeholder="Item name" value={name} onChange={(e) => { setName(e.target.value); setOpenSuggest(true); }} onFocus={() => setOpenSuggest(true)} onBlur={() => setTimeout(() => setOpenSuggest(false), 150)} required autoComplete="off" />
+            <Input placeholder="Item name" value={name} onChange={(e) => { setName(e.target.value); setOpenSuggest(true); }} onFocus={() => setOpenSuggest(true)} onBlur={() => setTimeout(() => setOpenSuggest(false), 150)} required autoComplete="off" />
             {openSuggest && filtered.length > 0 && (
               <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                 {filtered.map((n) => (
@@ -41,53 +44,50 @@ export const ItemsView: React.FC<{ openItem: (id: string) => void }> = ({ openIt
               </div>
             )}
           </div>
-          <input className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 sm:w-28" type="number" min={1} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
-          <input className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 sm:w-auto" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          <button className="inline-flex w-full items-center gap-1 rounded-md border border-transparent bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-500 sm:w-auto" type="submit">Add</button>
+          <Input className="w-full sm:w-28" type="number" min={1} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
+          <Input className="w-full sm:w-auto" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Button className="w-full sm:w-auto" type="submit">Add</Button>
         </form>
       )}
       {items.length === 0 ? (
         <p className="text-sm opacity-80">No items yet. Add a drop above.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <table className="min-w-[820px] divide-y divide-gray-200 dark:divide-gray-800">
-            <thead>
-              <tr>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Name</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Qty</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Date</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Requested Qty</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Quick Request</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {items.map((it) => (
-                <tr key={it.id}>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">
-                    <button className="text-brand-600 hover:underline" onClick={() => openItem(it.id)}>{it.name}</button>
-                  </td>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">{it.quantity}</td>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">{it.dateISO}</td>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">{requestTotal(it.id)}</td>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">
-                    <div className="flex items-center gap-2">
-                      <input className="w-20 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
-                      <button disabled={!session} className="inline-flex items-center gap-1 rounded-md border border-transparent bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-500 disabled:opacity-60" onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>Request</button>
-                    </div>
-                  </td>
-                  <td className="py-2 text-right text-sm text-gray-800 dark:text-gray-100">
-                    {isLeader && (
-                      <button className="inline-flex items-center gap-1 rounded-md border border-transparent bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-500" onClick={() => removeItem(it.id)}>Delete</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table className="min-w-[820px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-sm">Name</TableHead>
+              <TableHead className="text-sm">Qty</TableHead>
+              <TableHead className="text-sm">Date</TableHead>
+              <TableHead className="text-sm">Requested Qty</TableHead>
+              <TableHead className="text-sm">Quick Request</TableHead>
+              <TableHead className="text-sm"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((it) => (
+              <TableRow key={it.id}>
+                <TableCell>
+                  <button className="text-brand-600 hover:underline" onClick={() => openItem(it.id)}>{it.name}</button>
+                </TableCell>
+                <TableCell>{it.quantity}</TableCell>
+                <TableCell>{it.dateISO}</TableCell>
+                <TableCell>{requestTotal(it.id)}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Input className="w-20 px-2 py-1" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
+                    <Button disabled={!session} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>Request</Button>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {isLeader && (
+                    <Button variant="destructive" onClick={() => removeItem(it.id)}>Delete</Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
 };
-

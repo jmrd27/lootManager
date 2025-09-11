@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLoot } from '@/features/loot/store';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const SummaryView: React.FC = () => {
   const { assignments } = useLoot();
@@ -13,27 +14,24 @@ export const SummaryView: React.FC = () => {
       {names.length === 0 ? (
         <p className="text-sm opacity-80">No assignments yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <table className="min-w-[520px] divide-y divide-gray-200 dark:divide-gray-800">
-            <thead>
-              <tr>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Member</th>
-                <th className="py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Total Assigned</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {names.map((n) => (
-                <tr key={n}>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">{n}</td>
-                  <td className="py-2 text-sm text-gray-800 dark:text-gray-100">{summary[n]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table className="min-w-[520px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-sm">Member</TableHead>
+              <TableHead className="text-sm">Total Assigned</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {names.map((n) => (
+              <TableRow key={n}>
+                <TableCell>{n}</TableCell>
+                <TableCell>{summary[n]}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
       <p className="mt-2 text-xs opacity-70">Leaders assign items; everyone can view totals here.</p>
     </div>
   );
 };
-
