@@ -7,24 +7,28 @@ export type View = { name: 'items' } | { name: 'item'; id: string } | { name: 's
 export const TopBar: React.FC<{ setView: (v: View) => void }> = ({ setView }) => {
   const { session, profile, isLeader, signOut } = useAuth();
   return (
-    <header className="mb-4 flex flex-wrap items-center gap-3">
-      <h1 className="m-0 text-2xl font-semibold">DropSplit — Lineage 2 Loot</h1>
-      <nav className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
-        <Button variant="outline" onClick={() => setView({ name: 'items' })} className="w-full sm:w-auto">Items</Button>
-        {isLeader && (
-          <>
-            <Button onClick={() => setView({ name: 'summary' })} className="w-full sm:w-auto">Split Summary</Button>
-            <Button onClick={() => setView({ name: 'admin' })} className="w-full sm:w-auto">Admin</Button>
-          </>
-        )}
-        {!session ? null : (
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-sm opacity-80">{profile?.username}{profile?.approved ? '' : ' (pending)'}{isLeader ? ' · leader' : ''}</span>
-            <Button variant="outline" onClick={() => signOut()}>Sign out</Button>
-          </div>
-        )}
-      </nav>
+    <header className="sticky top-0 z-40 w-full border-b border-gray-800 bg-gray-900/80 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-3 text-gray-100 sm:px-4 lg:px-6">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold">DS</span>
+          <span className="text-sm font-semibold tracking-tight">DropSplit</span>
+        </div>
+        <nav className="ml-auto flex items-center gap-1">
+          <Button variant="ghost" onClick={() => setView({ name: 'items' })} className="text-sm text-gray-300 hover:text-white">Items</Button>
+          {isLeader && (
+            <>
+              <Button variant="ghost" onClick={() => setView({ name: 'summary' })} className="text-sm text-gray-300 hover:text-white">Summary</Button>
+              <Button variant="ghost" onClick={() => setView({ name: 'admin' })} className="text-sm text-gray-300 hover:text-white">Admin</Button>
+            </>
+          )}
+          {session && (
+            <div className="ml-2 hidden items-center gap-2 sm:flex">
+              <span className="text-xs opacity-80">{profile?.username}{profile?.approved ? '' : ' (pending)'}{isLeader ? ' · leader' : ''}</span>
+              <Button variant="outline" size="sm" onClick={() => signOut()}>Sign out</Button>
+            </div>
+          )}
+        </nav>
+      </div>
     </header>
   );
 };
-

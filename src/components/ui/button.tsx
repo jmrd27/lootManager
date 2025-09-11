@@ -8,7 +8,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
   default:
-    'bg-brand-600 text-white hover:bg-brand-500 border-transparent',
+    'bg-indigo-600 text-white hover:bg-indigo-500 border-transparent',
   secondary:
     'bg-gray-900/5 text-gray-900 hover:bg-gray-900/10 dark:text-gray-100 dark:bg-gray-50/10 dark:hover:bg-gray-50/15 border border-gray-300 dark:border-gray-700',
   outline:
@@ -18,7 +18,7 @@ const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
   ghost:
     'bg-transparent hover:bg-gray-900/5 dark:hover:bg-gray-50/10 text-inherit border-transparent',
   link:
-    'bg-transparent text-brand-600 hover:underline border-transparent',
+    'bg-transparent text-indigo-400 hover:underline border-transparent',
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -49,4 +49,3 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export default Button;
-

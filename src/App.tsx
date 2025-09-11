@@ -27,14 +27,18 @@ const Shell: React.FC = () => {
   useMemo(() => computeSplit(items, requests), [items, requests]);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-3 text-gray-900 dark:bg-gray-900 dark:text-gray-100 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-black text-gray-100">
       <TopBar setView={setView} />
-      {!session && <AuthInline />}
-      {view.name === 'items' && <ItemsView openItem={(id) => setView({ name: 'item', id })} />}
-      {view.name === 'item' && <ItemDetailView id={view.id} goBack={() => setView({ name: 'items' })} />}
-      {view.name === 'summary' && <SummaryView />}
-      {view.name === 'admin' && <AdminView />}
-      <footer className="mt-6 text-xs opacity-70">Data is stored in Supabase for your project.</footer>
+      <main className="mx-auto max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
+        {!session && <AuthInline />}
+        {view.name === 'items' && (
+          <ItemsView openItem={(id) => setView({ name: 'item', id })} />
+        )}
+        {view.name === 'item' && <ItemDetailView id={view.id} goBack={() => setView({ name: 'items' })} />}
+        {view.name === 'summary' && <SummaryView />}
+        {view.name === 'admin' && <AdminView />}
+        <footer className="mt-10 text-center text-xs opacity-70">Data is stored in Supabase for your project.</footer>
+      </main>
     </div>
   );
 };
