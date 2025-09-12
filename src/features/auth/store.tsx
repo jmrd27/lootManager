@@ -85,7 +85,19 @@ function useAuthStore(): Ctx {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err: any) {
+      if ((err as any)?.code !== 'session_not_found') {
+        // eslint-disable-next-line no-console
+        console.warn('signOut(global) failed, falling back to local', err);
+      }
+    } finally {
+      await supabase.auth.signOut({ scope: 'local' });
+      setProfile(null);
+      // Listener will null session, but clear eagerly for UX
+      setSession(null);
+    }
   };
 
   const isLeader = profile?.role === 'leader';
