@@ -4,6 +4,7 @@ export type Item = {
   quantity: number;
   dateISO: string; // YYYY-MM-DD
   createdAt?: string;
+  position?: number;
 };
 
 export type Request = {

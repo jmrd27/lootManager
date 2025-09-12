@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLoot } from '@/features/loot/store';
 import { useAuth } from '@/features/auth/store';
 import { Input } from '@/components/ui/input';
@@ -32,11 +32,91 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
   const filtered = useMemo(() => (name.trim() ? allNames.filter((n) => n.toLowerCase().includes(name.toLowerCase())) : []), [name, allNames]);
   const [openSuggest, setOpenSuggest] = useState(false);
   const [query, setQuery] = useState('');
-  const visibleItems = useMemo(() => {
+  const [sortMode, setSortMode] = useState<string>(() => localStorage.getItem('itemsSort') || 'default');
+  const setSort = (m: string) => { setSortMode(m); localStorage.setItem('itemsSort', m); };
+
+  // Default order uses position; others are client-side derivations
+  const baseItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((i) => i.name.toLowerCase().includes(q));
+    const list = items;
+    return q ? list.filter((i) => i.name.toLowerCase().includes(q)) : list;
   }, [items, query]);
+
+  const requestedMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const it of items) m.set(it.id, 0);
+    for (const r of requests) m.set(r.itemId, (m.get(r.itemId) || 0) + r.quantity);
+    return m;
+  }, [items, requests]);
+
+  const sortedItems = useMemo(() => {
+    if (sortMode === 'default') {
+      return [...baseItems].sort((a, b) => (a.position || 0) - (b.position || 0) || a.dateISO.localeCompare(b.dateISO));
+    }
+    const [key, dir] = sortMode.split(':');
+    const mul = dir === 'desc' ? -1 : 1;
+    const list = [...baseItems];
+    switch (key) {
+      case 'name':
+        list.sort((a, b) => mul * a.name.localeCompare(b.name));
+        break;
+      case 'qty':
+        list.sort((a, b) => mul * (a.quantity - b.quantity));
+        break;
+      case 'date':
+        list.sort((a, b) => mul * a.dateISO.localeCompare(b.dateISO));
+        break;
+      case 'requested':
+        list.sort((a, b) => mul * ((requestedMap.get(a.id) || 0) - (requestedMap.get(b.id) || 0)));
+        break;
+      default:
+        break;
+    }
+    return list;
+  }, [baseItems, sortMode, requestedMap]);
+
+  // Drag and drop reordering (default mode only)
+  const [orderIds, setOrderIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (sortMode === 'default') {
+      setOrderIds(sortedItems.map((i) => i.id));
+    }
+  }, [sortMode, sortedItems]);
+
+  const onDragStart = (id: string) => (e: React.DragEvent) => {
+    if (sortMode !== 'default' || !canManageItems) return;
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const onDropOver = (targetId: string) => (e: React.DragEvent) => {
+    if (sortMode !== 'default' || !canManageItems) return;
+    e.preventDefault();
+    const srcId = e.dataTransfer.getData('text/plain');
+    if (!srcId || srcId === targetId) return;
+    setOrderIds((prev) => {
+      const arr = prev.filter((x) => x !== srcId);
+      const idx = arr.indexOf(targetId);
+      if (idx === -1) return prev;
+      arr.splice(idx, 0, srcId);
+      return arr;
+    });
+  };
+  const allowDrop = (e: React.DragEvent) => {
+    if (sortMode !== 'default' || !canManageItems) return;
+    e.preventDefault();
+  };
+
+  const saveOrder = async () => {
+    if (sortMode !== 'default' || !canManageItems) return;
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.rpc('reorder_items', { ids: orderIds });
+      if (error) throw error;
+    } catch (err: any) {
+      alert(err.message || 'Failed to save order');
+    }
+  };
+  
   // Inline quantity edit (autosave with debounce)
   const [qtyEdits, setQtyEdits] = useState<Record<string, string>>({});
   const timersRef = useRef<Record<string, any>>({});
@@ -113,15 +193,36 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                 aria-label="Search items"
               />
             </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <label className="text-xs opacity-80">Sort</label>
+                <select value={sortMode} onChange={(e) => setSort(e.target.value)} className="rounded-md border border-gray-700 bg-gray-900/60 px-2 py-1 text-xs">
+                  <option value="default">Default (Leader Order)</option>
+                  <option value="name:asc">Name ↑</option>
+                  <option value="name:desc">Name ↓</option>
+                  <option value="qty:asc">Qty ↑</option>
+                  <option value="qty:desc">Qty ↓</option>
+                  <option value="date:asc">Date ↑</option>
+                  <option value="date:desc">Date ↓</option>
+                  <option value="requested:asc">Requested ↑</option>
+                  <option value="requested:desc">Requested ↓</option>
+                </select>
+              </div>
+              {sortMode !== 'default' ? (
+                <Button size="sm" variant="outline" onClick={() => setSort('default')}>Reset to Default</Button>
+              ) : canManageItems ? (
+                <Button size="sm" onClick={saveOrder}>Save Order</Button>
+              ) : null}
+            </div>
             {items.length === 0 ? (
               <p className="text-sm opacity-80">No items yet. Add a drop above.</p>
             ) : (
               <>
                 <div className="sm:hidden space-y-3">
-                  {visibleItems.map((it) => {
+                  {(sortMode === 'default' ? orderIds.map(id => sortedItems.find(i => i.id === id)!).filter(Boolean) : sortedItems).map((it) => {
                     const total = requestTotal(it.id);
                     return (
-                      <div key={it.id} className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
+                      <div key={it.id} className="rounded-lg border border-gray-800 bg-gray-900/60 p-3" draggable={sortMode==='default' && canManageItems} onDragStart={onDragStart(it.id)} onDragOver={allowDrop} onDrop={onDropOver(it.id)}>
                         <div className="flex items-start justify-between gap-2">
                           <button className="text-indigo-400 underline-offset-2 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
                           {canManageItems ? (
@@ -169,8 +270,8 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {visibleItems.map((it) => (
-                        <TableRow key={it.id}>
+                      {(sortMode === 'default' ? orderIds.map(id => sortedItems.find(i => i.id === id)!).filter(Boolean) : sortedItems).map((it) => (
+                        <TableRow key={it.id} draggable={sortMode==='default' && canManageItems} onDragStart={onDragStart(it.id)} onDragOver={allowDrop} onDrop={onDropOver(it.id)}>
                           <TableCell>
                             <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
                           </TableCell>
@@ -250,3 +351,4 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
     </div>
   );
 };
+

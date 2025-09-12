@@ -44,8 +44,9 @@ function useLootStore(): Ctx {
     const load = async () => {
       const { data: itemsData, error: e1 } = await supabase
         .from('items')
-        .select('id, name, quantity, date_iso, created_at')
-        .order('created_at', { ascending: false });
+        .select('id, name, quantity, date_iso, created_at, position')
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: true });
       if (!e1 && itemsData) {
         setItems(
           itemsData.map((r: any) => ({
@@ -54,6 +55,7 @@ function useLootStore(): Ctx {
             quantity: r.quantity,
             dateISO: r.date_iso,
             createdAt: r.created_at,
+            position: r.position ?? undefined,
           }))
         );
       }
@@ -112,12 +114,12 @@ function useLootStore(): Ctx {
         if (payload.eventType === 'INSERT') {
           const r: any = payload.new;
           setItems((prev) => [
-            { id: r.id, name: r.name, quantity: r.quantity, dateISO: r.date_iso, createdAt: r.created_at },
+            { id: r.id, name: r.name, quantity: r.quantity, dateISO: r.date_iso, createdAt: r.created_at, position: r.position ?? undefined },
             ...prev.filter((i) => i.id !== r.id),
           ]);
         } else if (payload.eventType === 'UPDATE') {
           const r: any = payload.new;
-          setItems((prev) => prev.map((i) => (i.id === r.id ? { id: r.id, name: r.name, quantity: r.quantity, dateISO: r.date_iso, createdAt: r.created_at } : i)));
+          setItems((prev) => prev.map((i) => (i.id === r.id ? { id: r.id, name: r.name, quantity: r.quantity, dateISO: r.date_iso, createdAt: r.created_at, position: r.position ?? i.position } : i)));
         } else if (payload.eventType === 'DELETE') {
           const r: any = payload.old;
           setItems((prev) => prev.filter((i) => i.id !== r.id));
@@ -214,16 +216,17 @@ function useLootStore(): Ctx {
       return;
     }
 
+    const maxPos = Math.max(0, ...items.map((i) => i.position || 0));
     const { data, error } = await supabase
       .from('items')
-      .insert({ name: input.name, quantity: input.quantity, date_iso: input.dateISO })
-      .select('id, name, quantity, date_iso, created_at')
+      .insert({ name: input.name, quantity: input.quantity, date_iso: input.dateISO, position: maxPos + 1 })
+      .select('id, name, quantity, date_iso, created_at, position')
       .single();
     if (error) {
       alert(`Failed to add item: ${error.message}`);
       return;
     }
-    const it: Item = { id: data.id, name: data.name, quantity: data.quantity, dateISO: data.date_iso, createdAt: data.created_at };
+    const it: Item = { id: data.id, name: data.name, quantity: data.quantity, dateISO: data.date_iso, createdAt: data.created_at, position: data.position ?? maxPos + 1 };
     setItems((prev) => [it, ...prev.filter((x) => x.id !== it.id)]);
   };
 
