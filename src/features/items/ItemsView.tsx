@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useLoot } from '@/features/loot/store';
 import { useAuth } from '@/features/auth/store';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { ItemManagerCard } from '@/features/items/ItemManagerCard';
 import { Tooltip } from '@/components/ui/tooltip';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
-  const { items, addItem, removeItem, requests, addRequest } = useLoot();
+  const { items, addItem, removeItem, requests, addRequest, updateItem } = useLoot();
   const { isLeader, session } = useAuth();
   const [name, setName] = useState('');
   const [qty, setQty] = useState(1);
@@ -37,6 +37,17 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
     if (!q) return items;
     return items.filter((i) => i.name.toLowerCase().includes(q));
   }, [items, query]);
+  // Inline quantity edit (autosave with debounce)
+  const [qtyEdits, setQtyEdits] = useState<Record<string, string>>({});
+  const timersRef = useRef<Record<string, any>>({});
+  const scheduleQtySave = (id: string, raw: string) => {
+    if (timersRef.current[id]) clearTimeout(timersRef.current[id]);
+    timersRef.current[id] = setTimeout(() => {
+      const n = Math.max(0, parseInt(raw || '0', 10) || 0);
+      updateItem(id, { quantity: n });
+      delete timersRef.current[id];
+    }, 400);
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
@@ -122,7 +133,30 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       <TableCell>
                         <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
                       </TableCell>
-                      <TableCell>{it.quantity}</TableCell>
+                      <TableCell>
+                        {isLeader ? (
+                          <Input
+                            className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
+                            type="number"
+                            min={0}
+                            value={qtyEdits[it.id] ?? String(it.quantity)}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setQtyEdits((prev) => ({ ...prev, [it.id]: v }));
+                              scheduleQtySave(it.id, v);
+                            }}
+                            onBlur={(e) => {
+                              const n = Math.max(0, parseInt(e.target.value || '0', 10) || 0);
+                              updateItem(it.id, { quantity: n });
+                              setQtyEdits((prev) => ({ ...prev, [it.id]: String(n) }));
+                            }}
+                            aria-label={`Quantity for ${it.name}`}
+                            title="Auto-saves"
+                          />
+                        ) : (
+                          it.quantity
+                        )}
+                      </TableCell>
                       <TableCell>{it.dateISO}</TableCell>
                       <TableCell>
                         <Tooltip
@@ -152,7 +186,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Input className="w-20 px-2 py-1" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
+                          <Input className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
                           <Button disabled={!session} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>Request</Button>
                         </div>
                       </TableCell>
