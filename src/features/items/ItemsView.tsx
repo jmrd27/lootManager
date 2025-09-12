@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RecentAssignments } from '@/features/assignments/RecentAssignments';
 import { ItemManagerCard } from '@/features/items/ItemManagerCard';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
   const { items, addItem, removeItem, requests, addRequest } = useLoot();
@@ -90,7 +91,32 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       </TableCell>
                       <TableCell>{it.quantity}</TableCell>
                       <TableCell>{it.dateISO}</TableCell>
-                      <TableCell>{requestTotal(it.id)}</TableCell>
+                      <TableCell>
+                        <Tooltip
+                          content={(() => {
+                            const unfulfilled = requests
+                              .filter((r) => r.itemId === it.id)
+                              .slice()
+                              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                            if (unfulfilled.length === 0) return <span className="opacity-70">No unfulfilled requests</span>;
+                            return (
+                              <div>
+                                <div className="mb-2 text-[10px] uppercase tracking-wide opacity-70">Unfulfilled Requests</div>
+                                <ul className="max-h-64 space-y-1 overflow-auto">
+                                  {unfulfilled.map((r) => (
+                                    <li key={r.id} className="flex items-center justify-between gap-2">
+                                      <span className="truncate">{r.memberName}</span>
+                                      <span className="shrink-0">× {r.quantity}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })()}
+                        >
+                          <span className="underline decoration-dotted underline-offset-2" title={`Unfulfilled requests for ${it.name}`}>{requestTotal(it.id)}</span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Input className="w-20 px-2 py-1" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
