@@ -1,14 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth, Profile } from '@/features/auth/store';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useLoot } from '@/features/loot/store';
 
 export const AdminView: React.FC = () => {
   const { isLeader, session } = useAuth();
   const [profiles, setProfiles] = useState<Profile[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const { requestsEnabled } = useLoot();
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [effectiveEnabled, setEffectiveEnabled] = useState<boolean>(requestsEnabled);
+  useEffect(() => setEffectiveEnabled(requestsEnabled), [requestsEnabled]);
 
   const load = async () => {
     setLoading(true);
@@ -27,6 +32,38 @@ export const AdminView: React.FC = () => {
 
   return (
     <div>
+      <div className="mb-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">Requests</h3>
+            <p className="text-xs opacity-80">Toggle whether members can submit new requests.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{effectiveEnabled ? 'Enabled' : 'Disabled'}</span>
+            <Button
+              variant={effectiveEnabled ? 'destructive' : 'default'}
+              disabled={savingSettings}
+              onClick={async () => {
+                setSavingSettings(true);
+                const next = !effectiveEnabled;
+                setEffectiveEnabled(next);
+                const { error } = await supabase
+                  .from('settings')
+                  .upsert({ id: 1, requests_enabled: next })
+                  .eq('id', 1);
+                setSavingSettings(false);
+                if (error) {
+                  // revert optimistic update
+                  setEffectiveEnabled(!next);
+                  alert(`Failed to update setting: ${error.message}`);
+                }
+              }}
+            >
+              {effectiveEnabled ? 'Disable' : 'Enable'}
+            </Button>
+          </div>
+        </div>
+      </div>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Admin · Users</h2>
         <Button variant="outline" onClick={load} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</Button>
@@ -120,4 +157,3 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
     </TableRow>
   );
 };
-

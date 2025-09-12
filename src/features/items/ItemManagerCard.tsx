@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
 export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = ({ id, onClose }) => {
-  const { items, requests, assignments, removeRequest, updateItem, addAssignment, decrementRequest } = useLoot();
+  const { items, requests, assignments, removeRequest, updateItem, addAssignment, decrementRequest, requestsEnabled } = useLoot();
   const { isLeader, session } = useAuth();
   const item = items.find((x) => x.id === id);
   if (!item) return null;
@@ -36,15 +36,19 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
             )}
           </div>
           <div className="mb-3 mt-1 flex items-center gap-3">
-            <label className="text-sm">
-              Quantity:
-              <Input className="ml-2 w-full sm:w-28" type="number" min={0} value={item.quantity} onChange={(e) => setItemQty(parseInt(e.target.value || '0', 10))} />
-            </label>
+            {isLeader ? (
+              <label className="text-sm">
+                Quantity:
+                <Input className="ml-2 w-full sm:w-28" type="number" min={0} value={item.quantity} onChange={(e) => setItemQty(parseInt(e.target.value || '0', 10))} />
+              </label>
+            ) : (
+              <span className="text-sm">Quantity: <span className="font-medium">{item.quantity}</span></span>
+            )}
             <span className="text-sm opacity-80">Date: {item.dateISO}</span>
           </div>
 
           <h3 className="mt-4 text-base font-semibold">Requests</h3>
-          <p className="mb-2 text-sm opacity-80">Use the Items list to add a quick request.</p>
+          <p className="mb-2 text-sm opacity-80">{requestsEnabled ? 'Use the Items list to add a quick request.' : 'Requests are disabled by an admin.'}</p>
           {myRequests.length === 0 ? <p className="text-sm opacity-80">No requests yet.</p> : (
             <ul className="space-y-1">
               {myRequests.map((r) => (

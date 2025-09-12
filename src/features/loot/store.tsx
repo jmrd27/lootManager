@@ -7,6 +7,7 @@ type Ctx = {
   items: Item[];
   requests: Request[];
   assignments: Assignment[];
+  requestsEnabled: boolean;
   addItem: (input: { name: string; quantity: number; dateISO: string }) => void;
   updateItem: (id: string, patch: Partial<Pick<Item, 'name' | 'quantity' | 'dateISO'>>) => void;
   removeItem: (id: string) => void;
@@ -36,6 +37,7 @@ function useLootStore(): Ctx {
   const [items, setItems] = useState<Item[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [requestsEnabled, setRequestsEnabled] = useState<boolean>(true);
 
   // Initial load
   useEffect(() => {
@@ -89,6 +91,16 @@ function useLootStore(): Ctx {
             createdAt: a.created_at,
           }))
         );
+      }
+
+      // Settings
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('requests_enabled')
+        .eq('id', 1)
+        .maybeSingle();
+      if (settings && typeof (settings as any).requests_enabled === 'boolean') {
+        setRequestsEnabled((settings as any).requests_enabled as boolean);
       }
     };
     load();
@@ -155,6 +167,12 @@ function useLootStore(): Ctx {
         } else if (payload.eventType === 'DELETE') {
           const a: any = payload.old;
           setAssignments((prev) => prev.filter((x) => x.id !== a.id));
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const r: any = payload.new;
+          if (typeof r?.requests_enabled === 'boolean') setRequestsEnabled(r.requests_enabled);
         }
       })
       .subscribe();
@@ -235,6 +253,10 @@ function useLootStore(): Ctx {
   };
 
   const addRequest: Ctx['addRequest'] = async (input) => {
+    if (!requestsEnabled) {
+      alert('Requests are currently disabled by an admin.');
+      return;
+    }
     const user = (await supabase.auth.getUser()).data.user;
     if (!user || !profile?.username) {
       alert('Please sign in to request items.');
@@ -363,5 +385,5 @@ function useLootStore(): Ctx {
     else setAssignments((prev) => prev.filter((x) => x.id !== id));
   };
 
-  return { items, requests, assignments, addItem, updateItem, removeItem, addRequest, removeRequest, decrementRequest, addAssignment, removeAssignment, clearAll };
+  return { items, requests, assignments, requestsEnabled, addItem, updateItem, removeItem, addRequest, removeRequest, decrementRequest, addAssignment, removeAssignment, clearAll };
 }

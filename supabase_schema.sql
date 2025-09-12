@@ -155,3 +155,55 @@ create policy "assignments leader delete" on public.assignments for delete
 --   with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.approved = true));
 -- create policy "owner or leader delete requests" on public.requests for delete
 --   using (requester_id = auth.uid() or public.is_leader(auth.uid()));
+
+-- Enforce settings.requests_enabled at the DB layer for request inserts
+do $$ begin
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'requests'
+  ) then
+    drop policy if exists "approved can insert requests" on public.requests;
+    create policy "approved can insert requests" on public.requests for insert
+      with check (
+        requester_id = auth.uid()
+        and exists (
+          select 1 from public.profiles p
+          where p.id = auth.uid() and p.approved = true
+        )
+        and exists (
+          select 1 from public.settings s
+          where s.id = 1 and s.requests_enabled = true
+        )
+      );
+  end if;
+end $$;
+
+-- === Global Settings ===
+create table if not exists public.settings (
+  id int primary key default 1 check (id = 1),
+  requests_enabled boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.settings enable row level security;
+
+drop policy if exists "settings read" on public.settings;
+create policy "settings read" on public.settings for select using (true);
+
+drop policy if exists "settings leader write" on public.settings;
+create policy "settings leader write" on public.settings for insert
+  with check (public.is_leader(auth.uid()));
+
+drop policy if exists "settings leader update" on public.settings;
+create policy "settings leader update" on public.settings for update
+  using (public.is_leader(auth.uid())) with check (public.is_leader(auth.uid()));
+
+-- Ensure Realtime publication tracks settings (ignore if already added)
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.settings;
+  exception when duplicate_object then
+    null;
+  end;
+end $$;

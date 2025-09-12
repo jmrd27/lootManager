@@ -9,7 +9,7 @@ import { ItemManagerCard } from '@/features/items/ItemManagerCard';
 import { Tooltip } from '@/components/ui/tooltip';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
-  const { items, addItem, removeItem, requests, addRequest, updateItem } = useLoot();
+  const { items, addItem, removeItem, requests, addRequest, updateItem, requestsEnabled } = useLoot();
   const { isLeader, session } = useAuth();
   const [name, setName] = useState('');
   const [qty, setQty] = useState(1);
@@ -187,7 +187,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Input className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
-                          <Button disabled={!session} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>Request</Button>
+                          <Button disabled={!session || !requestsEnabled} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>{requestsEnabled ? 'Request' : 'Disabled'}</Button>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
