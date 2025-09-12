@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export type Profile = {
   id: string;
   username: string;
-  role: 'member' | 'leader';
+  role: 'member' | 'leader' | 'item_manager';
   approved: boolean;
 };
 
@@ -16,6 +16,8 @@ type Ctx = {
   signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isLeader: boolean;
+  isItemManager: boolean;
+  canManageItems: boolean;
   refreshProfile: () => Promise<void>;
 };
 
@@ -101,8 +103,10 @@ function useAuthStore(): Ctx {
   };
 
   const isLeader = profile?.role === 'leader';
+  const isItemManager = profile?.role === 'item_manager';
+  const canManageItems = !!(isLeader || isItemManager);
 
-  return { session, profile, loading, signIn, signUp, signOut, isLeader, refreshProfile };
+  return { session, profile, loading, signIn, signUp, signOut, isLeader, isItemManager, canManageItems, refreshProfile };
 }
 
 async function ensureProfile(username: string) {

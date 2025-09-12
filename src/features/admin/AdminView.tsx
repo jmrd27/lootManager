@@ -140,6 +140,7 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
       <TableCell>
         <select value={role} onChange={(e) => setRole(e.target.value as Profile['role'])} className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand-600 dark:border-gray-700 dark:bg-gray-800">
           <option value="member">member</option>
+          <option value="item_manager">item_manager</option>
           <option value="leader">leader</option>
         </select>
       </TableCell>

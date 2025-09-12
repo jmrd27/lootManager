@@ -10,7 +10,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
   const { items, addItem, removeItem, requests, addRequest, updateItem, requestsEnabled } = useLoot();
-  const { isLeader, session } = useAuth();
+  const { isLeader, canManageItems, session } = useAuth();
   const [name, setName] = useState('');
   const [qty, setQty] = useState(1);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -88,7 +88,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div>
-            {isLeader && (
+            {canManageItems && (
               <form onSubmit={onAdd} className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-gray-800 bg-gray-900/60 p-3">
                 <div className="relative min-w-[200px] flex-1">
                   <Input placeholder="Item name" value={name} onChange={(e) => { setName(e.target.value); setOpenSuggest(true); }} onFocus={() => setOpenSuggest(true)} onBlur={() => setTimeout(() => setOpenSuggest(false), 150)} required autoComplete="off" />
@@ -124,7 +124,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                       <div key={it.id} className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
                         <div className="flex items-start justify-between gap-2">
                           <button className="text-indigo-400 underline-offset-2 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
-                          {isLeader ? (
+                          {canManageItems ? (
                             <Input
                               className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
                               type="number"
@@ -175,7 +175,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                             <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
                           </TableCell>
                           <TableCell>
-                            {isLeader ? (
+                            {canManageItems ? (
                               <Input
                                 className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
                                 type="number"

@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = ({ id, onClose }) => {
   const { items, requests, assignments, removeRequest, updateItem, addAssignment, decrementRequest, requestsEnabled } = useLoot();
-  const { isLeader, session } = useAuth();
+  const { isLeader, canManageItems, session } = useAuth();
   const item = items.find((x) => x.id === id);
   if (!item) return null;
 
@@ -36,7 +36,7 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
             )}
           </div>
           <div className="mb-3 mt-1 flex items-center gap-3">
-            {isLeader ? (
+            {canManageItems ? (
               <label className="text-sm">
                 Quantity:
                 <Input className="ml-2 w-full sm:w-28" type="number" min={0} value={item.quantity} onChange={(e) => setItemQty(parseInt(e.target.value || '0', 10))} />

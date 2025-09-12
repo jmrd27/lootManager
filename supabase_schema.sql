@@ -24,6 +24,33 @@ create index if not exists idx_items_created_at on public.items(created_at desc)
 alter table public.items enable row level security;
 alter table public.requests enable row level security;
 
+-- Helper role-check functions (defined early so policies can reference them)
+create or replace function public.is_leader(uid uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles where id = uid and role = 'leader'
+  );
+$$;
+
+grant execute on function public.is_leader(uuid) to anon, authenticated;
+
+create or replace function public.is_item_manager(uid uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles where id = uid and role = 'item_manager'
+  );
+$$;
+
+grant execute on function public.is_item_manager(uuid) to anon, authenticated;
+
 -- Policies (adjust as needed)
 -- For a simple shared app where anyone with the link can contribute, allow anon reads/writes.
 -- If you want to restrict to authenticated users, replace 'public' with 'authenticated' and configure auth.
@@ -43,6 +70,15 @@ create policy "leader update items" on public.items for update
   with check (public.is_leader(auth.uid()));
 create policy "leader delete items" on public.items for delete
   using (public.is_leader(auth.uid()));
+
+-- Allow item managers to add and edit items (not delete)
+drop policy if exists "manage insert items" on public.items;
+drop policy if exists "manage update items" on public.items;
+create policy "manage insert items" on public.items for insert
+  with check (public.is_item_manager(auth.uid()));
+create policy "manage update items" on public.items for update
+  using (public.is_item_manager(auth.uid()))
+  with check (public.is_item_manager(auth.uid()));
 
 drop policy if exists "allow all read requests" on public.requests;
 create policy "allow all read requests" on public.requests for select using (true);
@@ -67,7 +103,7 @@ create policy "owner or leader update requests" on public.requests for update
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text unique not null check (char_length(username) between 3 and 32),
-  role text not null default 'member' check (role in ('member','leader')),
+  role text not null default 'member' check (role in ('member','leader','item_manager')),
   approved boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -87,6 +123,19 @@ as $$
 $$;
 
 grant execute on function public.is_leader(uuid) to anon, authenticated;
+-- Helper to check item manager role
+create or replace function public.is_item_manager(uid uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles where id = uid and role = 'item_manager'
+  );
+$$;
+
+grant execute on function public.is_item_manager(uuid) to anon, authenticated;
 
 -- Profiles policies
 drop policy if exists "profiles self read" on public.profiles;
