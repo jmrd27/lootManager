@@ -116,89 +116,132 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
             {items.length === 0 ? (
               <p className="text-sm opacity-80">No items yet. Add a drop above.</p>
             ) : (
-              <Table className="min-w-[820px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-sm">Name</TableHead>
-                    <TableHead className="text-sm">Qty</TableHead>
-                    <TableHead className="text-sm">Date</TableHead>
-                    <TableHead className="text-sm">Requested Qty</TableHead>
-                    <TableHead className="text-sm">Quick Request</TableHead>
-                    <TableHead className="text-sm"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visibleItems.map((it) => (
-                    <TableRow key={it.id}>
-                      <TableCell>
-                        <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
-                      </TableCell>
-                      <TableCell>
-                        {isLeader ? (
-                          <Input
-                            className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
-                            type="number"
-                            min={0}
-                            value={qtyEdits[it.id] ?? String(it.quantity)}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setQtyEdits((prev) => ({ ...prev, [it.id]: v }));
-                              scheduleQtySave(it.id, v);
-                            }}
-                            onBlur={(e) => {
-                              const n = Math.max(0, parseInt(e.target.value || '0', 10) || 0);
-                              updateItem(it.id, { quantity: n });
-                              setQtyEdits((prev) => ({ ...prev, [it.id]: String(n) }));
-                            }}
-                            aria-label={`Quantity for ${it.name}`}
-                            title="Auto-saves"
-                          />
-                        ) : (
-                          it.quantity
-                        )}
-                      </TableCell>
-                      <TableCell>{it.dateISO}</TableCell>
-                      <TableCell>
-                        <Tooltip
-                          content={(() => {
-                            const unfulfilled = requests
-                              .filter((r) => r.itemId === it.id)
-                              .slice()
-                              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-                            if (unfulfilled.length === 0) return <span className="opacity-70">No unfulfilled requests</span>;
-                            return (
-                              <div>
-                                <div className="mb-2 text-[10px] uppercase tracking-wide opacity-70">Unfulfilled Requests</div>
-                                <ul className="max-h-64 space-y-1 overflow-auto">
-                                  {unfulfilled.map((r) => (
-                                    <li key={r.id} className="flex items-center justify-between gap-2">
-                                      <span className="truncate">{r.memberName}</span>
-                                      <span className="shrink-0">× {r.quantity}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                          })()}
-                        >
-                          <span className="underline decoration-dotted underline-offset-2" title={`Unfulfilled requests for ${it.name}`}>{requestTotal(it.id)}</span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Input className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
-                          <Button disabled={!session || !requestsEnabled} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>{requestsEnabled ? 'Request' : 'Disabled'}</Button>
+              <>
+                <div className="sm:hidden space-y-3">
+                  {visibleItems.map((it) => {
+                    const total = requestTotal(it.id);
+                    return (
+                      <div key={it.id} className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <button className="text-indigo-400 underline-offset-2 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
+                          {isLeader ? (
+                            <Input
+                              className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
+                              type="number"
+                              min={0}
+                              value={qtyEdits[it.id] ?? String(it.quantity)}
+                              onChange={(e) => { const v = e.target.value; setQtyEdits((p) => ({ ...p, [it.id]: v })); scheduleQtySave(it.id, v); }}
+                              onBlur={(e) => { const n = Math.max(0, parseInt(e.target.value || '0', 10) || 0); updateItem(it.id, { quantity: n }); setQtyEdits((p) => ({ ...p, [it.id]: String(n) })); }}
+                              aria-label={`Quantity for ${it.name}`}
+                              title="Auto-saves"
+                            />
+                          ) : (
+                            <span className="text-xs opacity-80">Qty: {it.quantity}</span>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isLeader && (
-                          <Button variant="destructive" onClick={() => removeItem(it.id)}>Delete</Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        <div className="mt-1 flex items-center justify-between gap-2 text-xs opacity-80">
+                          <span>Date: {it.dateISO}</span>
+                          <span>Requested: {total}</span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <Input className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
+                            <Button size="sm" disabled={!session || !requestsEnabled} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>{requestsEnabled ? 'Request' : 'Disabled'}</Button>
+                          </div>
+                          {isLeader && (
+                            <Button size="sm" variant="destructive" onClick={() => removeItem(it.id)}>Delete</Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="hidden sm:block">
+                  <Table className="min-w-[820px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-sm">Name</TableHead>
+                        <TableHead className="text-sm">Qty</TableHead>
+                        <TableHead className="text-sm">Date</TableHead>
+                        <TableHead className="text-sm">Requested Qty</TableHead>
+                        <TableHead className="text-sm">Quick Request</TableHead>
+                        <TableHead className="text-sm"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {visibleItems.map((it) => (
+                        <TableRow key={it.id}>
+                          <TableCell>
+                            <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
+                          </TableCell>
+                          <TableCell>
+                            {isLeader ? (
+                              <Input
+                                className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center"
+                                type="number"
+                                min={0}
+                                value={qtyEdits[it.id] ?? String(it.quantity)}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setQtyEdits((prev) => ({ ...prev, [it.id]: v }));
+                                  scheduleQtySave(it.id, v);
+                                }}
+                                onBlur={(e) => {
+                                  const n = Math.max(0, parseInt(e.target.value || '0', 10) || 0);
+                                  updateItem(it.id, { quantity: n });
+                                  setQtyEdits((prev) => ({ ...prev, [it.id]: String(n) }));
+                                }}
+                                aria-label={`Quantity for ${it.name}`}
+                                title="Auto-saves"
+                              />
+                            ) : (
+                              it.quantity
+                            )}
+                          </TableCell>
+                          <TableCell>{it.dateISO}</TableCell>
+                          <TableCell>
+                            <Tooltip
+                              content={(() => {
+                                const unfulfilled = requests
+                                  .filter((r) => r.itemId === it.id)
+                                  .slice()
+                                  .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                                if (unfulfilled.length === 0) return <span className="opacity-70">No unfulfilled requests</span>;
+                                return (
+                                  <div>
+                                    <div className="mb-2 text-[10px] uppercase tracking-wide opacity-70">Unfulfilled Requests</div>
+                                    <ul className="max-h-64 space-y-1 overflow-auto">
+                                      {unfulfilled.map((r) => (
+                                        <li key={r.id} className="flex items-center justify-between gap-2">
+                                          <span className="truncate">{r.memberName}</span>
+                                          <span className="shrink-0">× {r.quantity}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              })()}
+                            >
+                              <span className="underline decoration-dotted underline-offset-2" title={`Unfulfilled requests for ${it.name}`}>{requestTotal(it.id)}</span>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Input className="!w-[3rem] pr-0 pl-1 py-1 text-xs text-center" type="number" min={1} value={getRqQty(it.id)} onChange={(e) => setRqQtyFor(it.id, parseInt(e.target.value || '1', 10))} />
+                              <Button disabled={!session || !requestsEnabled} onClick={() => { const q = getRqQty(it.id); if (q > 0) { addRequest({ itemId: it.id, quantity: q }); setRqQtyFor(it.id, 1); } }}>{requestsEnabled ? 'Request' : 'Disabled'}</Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isLeader && (
+                              <Button variant="destructive" onClick={() => removeItem(it.id)}>Delete</Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </div>
           <RecentAssignments />
