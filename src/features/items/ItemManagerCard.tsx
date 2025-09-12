@@ -52,7 +52,7 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
           {myRequests.length === 0 ? <p className="text-sm opacity-80">No requests yet.</p> : (
             <ul className="space-y-1">
               {myRequests.map((r) => (
-                <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900/60 p-3 shadow-sm">
                   <div className="min-w-0">
                     <span className="truncate">
                       {r.memberName} × {r.quantity}

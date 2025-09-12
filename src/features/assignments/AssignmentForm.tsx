@@ -29,7 +29,7 @@ export const AssignmentForm: React.FC<{ remaining: number; suggestNames: string[
           autoComplete="off"
         />
         {open && filtered.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-800 bg-gray-900/90 shadow-lg">
             {filtered.map((n) => (
               <button key={n} type="button" className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onMouseDown={(e) => { e.preventDefault(); setName(n); setOpen(false); }}>
                 {n}
