@@ -90,6 +90,7 @@ export const AdminView: React.FC = () => {
                 leadersCount={profiles.filter((x) => x.role === 'leader' && x.approved).length}
                 currentUserId={session?.user.id || ''}
                 onSaved={(np) => setProfiles((prev) => prev ? prev.map(x => x.id === np.id ? np : x) : prev)}
+                onDeleted={(id) => setProfiles((prev) => prev ? prev.filter(x => x.id !== id) : prev)}
                 savingId={savingId}
                 setSavingId={setSavingId}
               />
@@ -101,7 +102,7 @@ export const AdminView: React.FC = () => {
   );
 };
 
-const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: string; onSaved: (p: Profile) => void; savingId: string | null; setSavingId: (id: string | null) => void }> = ({ p, leadersCount, currentUserId, onSaved, savingId, setSavingId }) => {
+const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: string; onSaved: (p: Profile) => void; onDeleted: (id: string) => void; savingId: string | null; setSavingId: (id: string | null) => void }> = ({ p, leadersCount, currentUserId, onSaved, onDeleted, savingId, setSavingId }) => {
   const [role, setRole] = useState<Profile['role']>(p.role);
   const [approved, setApproved] = useState<boolean>(p.approved);
   const saving = savingId === p.id;
@@ -134,6 +135,27 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
     onSaved(data as unknown as Profile);
   };
 
+  const doDelete = async () => {
+    const isLeaderRow = p.role === 'leader' && p.approved === true;
+    if (p.id === currentUserId) {
+      alert('You cannot delete your own account.');
+      return;
+    }
+    if (isLeaderRow && leadersCount <= 1) {
+      alert('Cannot delete the last approved leader. Assign another leader first.');
+      return;
+    }
+    if (!confirm(`Delete user ${p.username}? This removes their profile.`)) return;
+    setSavingId(p.id);
+    const { error } = await supabase.from('profiles').delete().eq('id', p.id);
+    setSavingId(null);
+    if (error) {
+      alert(`Failed to delete user: ${error.message}`);
+      return;
+    }
+    onDeleted(p.id);
+  };
+
   return (
     <TableRow>
       <TableCell>{p.username}</TableCell>
@@ -151,9 +173,12 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
         </label>
       </TableCell>
       <TableCell className="text-right">
-        <Button disabled={saving} onClick={save}>
-          {saving ? 'Saving…' : 'Save'}
-        </Button>
+        <div className="flex items-center justify-end gap-2">
+          <Button disabled={saving} onClick={save}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+          <Button disabled={saving} variant="destructive" onClick={doDelete}>Delete</Button>
+        </div>
       </TableCell>
     </TableRow>
   );
