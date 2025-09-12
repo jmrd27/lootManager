@@ -12,6 +12,7 @@ type Ctx = {
   removeItem: (id: string) => void;
   addRequest: (input: { itemId: string; quantity: number }) => void;
   removeRequest: (id: string) => void;
+  decrementRequest: (id: string, by: number) => Promise<void>;
   addAssignment: (input: { itemId: string; assigneeName: string; quantity: number }) => void;
   removeAssignment: (id: string) => void;
   clearAll: () => void;
@@ -270,6 +271,31 @@ function useLootStore(): Ctx {
     }
   };
 
+  const decrementRequest: Ctx['decrementRequest'] = async (id, by) => {
+    const current = requests.find((r) => r.id === id);
+    if (!current) return;
+    const newQty = Math.max(0, (current.quantity || 0) - Math.max(0, by || 0));
+    // Optimistic local update
+    if (newQty === 0) {
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      const { error } = await supabase.from('requests').delete().eq('id', id);
+      if (error) {
+        // revert on failure
+        setRequests((prev) => [current, ...prev]);
+        alert(`Failed to update request: ${error.message}`);
+      }
+    } else {
+      const next = { ...current, quantity: newQty } as Request;
+      setRequests((prev) => prev.map((r) => (r.id === id ? next : r)));
+      const { error } = await supabase.from('requests').update({ quantity: newQty }).eq('id', id);
+      if (error) {
+        // revert on failure
+        setRequests((prev) => prev.map((r) => (r.id === id ? current : r)));
+        alert(`Failed to update request: ${error.message}`);
+      }
+    }
+  };
+
   const clearAll = async () => {
     if (!confirm('Clear all items and requests?')) return;
     // Order matters if no cascade
@@ -313,6 +339,22 @@ function useLootStore(): Ctx {
       createdAt: data.created_at,
     };
     setAssignments((prev) => [a, ...prev.filter((x) => x.id !== a.id)]);
+
+    // Decrement item quantity on hand to reflect assignment
+    const current = items.find((i) => i.id === itemId);
+    if (current) {
+      const newQty = Math.max(0, (current.quantity || 0) - quantity);
+      setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, quantity: newQty } : i)));
+      const { error: updErr } = await supabase
+        .from('items')
+        .update({ quantity: newQty })
+        .eq('id', itemId);
+      if (updErr) {
+        // Revert on failure
+        setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, quantity: current.quantity } : i)));
+        alert(`Failed to update item quantity: ${updErr.message}`);
+      }
+    }
   };
 
   const removeAssignment: Ctx['removeAssignment'] = async (id) => {
@@ -321,5 +363,5 @@ function useLootStore(): Ctx {
     else setAssignments((prev) => prev.filter((x) => x.id !== id));
   };
 
-  return { items, requests, assignments, addItem, updateItem, removeItem, addRequest, removeRequest, addAssignment, removeAssignment, clearAll };
+  return { items, requests, assignments, addItem, updateItem, removeItem, addRequest, removeRequest, decrementRequest, addAssignment, removeAssignment, clearAll };
 }

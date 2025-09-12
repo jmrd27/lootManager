@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
 export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = ({ id, onClose }) => {
-  const { items, requests, assignments, removeRequest, updateItem, addAssignment } = useLoot();
+  const { items, requests, assignments, removeRequest, updateItem, addAssignment, decrementRequest } = useLoot();
   const { isLeader, session } = useAuth();
   const item = items.find((x) => x.id === id);
   if (!item) return null;
@@ -15,7 +15,7 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
   const myRequests = requests.filter((r) => r.itemId === id);
   const myAssignments = assignments.filter((a) => a.itemId === id);
   const assignedQty = myAssignments.reduce((s, a) => s + a.quantity, 0);
-  const remainingQty = Math.max(0, item.quantity - assignedQty);
+  const remainingQty = item.quantity; // quantity reflects on-hand
   const allocations = computeSplit([item], myRequests)[item.id];
 
   const setItemQty = (newQty: number) => updateItem(item.id, { quantity: Math.max(0, newQty) });
@@ -66,10 +66,11 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
                           onChange={(e) => setAssignQtyFor(r.id, parseInt(e.target.value || '1', 10))}
                         />
                         <Button
-                          onClick={() => {
-                            const q = getAssignQty(r.id);
+                          onClick={async () => {
+                            const q = Math.min(getAssignQty(r.id), r.quantity, remainingQty);
                             if (q > 0) {
-                              addAssignment({ itemId: id, assigneeName: r.memberName, quantity: q });
+                              await addAssignment({ itemId: id, assigneeName: r.memberName, quantity: q });
+                              await decrementRequest(r.id, q);
                               setAssignQtyFor(r.id, 1);
                             }
                           }}
@@ -102,7 +103,7 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
           ) : isLeader ? <p className="text-sm opacity-80">No split suggestion.</p> : null}
 
           <h3 className="mt-5 text-base font-semibold">Totals</h3>
-          <p className="text-sm opacity-80">Assigned: {assignedQty} / {item.quantity} · Remaining: {remainingQty}</p>
+          <p className="text-sm opacity-80">On hand: {item.quantity} · Assigned so far: {assignedQty}</p>
         </CardContent>
       </Card>
     </aside>
