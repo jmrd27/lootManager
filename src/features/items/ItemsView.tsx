@@ -31,6 +31,12 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
   const allNames = useMemo(() => Array.from(new Set(items.map((i) => i.name))).sort((a, b) => a.localeCompare(b)), [items]);
   const filtered = useMemo(() => (name.trim() ? allNames.filter((n) => n.toLowerCase().includes(name.toLowerCase())) : []), [name, allNames]);
   const [openSuggest, setOpenSuggest] = useState(false);
+  const [query, setQuery] = useState('');
+  const visibleItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((i) => i.name.toLowerCase().includes(q));
+  }, [items, query]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
@@ -88,6 +94,14 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                 <Button className="w-full sm:w-auto" type="submit">Add New Item</Button>
               </form>
             )}
+            <div className="mb-4">
+              <Input
+                placeholder="Search items..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search items"
+              />
+            </div>
             {items.length === 0 ? (
               <p className="text-sm opacity-80">No items yet. Add a drop above.</p>
             ) : (
@@ -103,7 +117,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((it) => (
+                  {visibleItems.map((it) => (
                     <TableRow key={it.id}>
                       <TableCell>
                         <button className="text-indigo-400 hover:underline" onClick={() => setSelectedId(it.id)}>{it.name}</button>
