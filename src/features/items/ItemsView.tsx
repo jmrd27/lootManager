@@ -35,12 +35,31 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
 
   return (
     <div>
-      <section className="mb-6 text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-          <span className="bg-gradient-to-r from-indigo-400 to-violet-500 bg-clip-text text-transparent">Manage Your Digital Loot</span>
-          <span className="block">Like a Pro</span>
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-300">Track, organize, and split loot with a clean, focused interface.</p>
+      <section className="mb-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <span className="bg-gradient-to-r from-indigo-400 to-violet-500 bg-clip-text text-transparent">Claim Your Loot</span>
+            <span className="block">In Three Simple Steps</span>
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-300">Follow the flow below to request and receive your share quickly.</p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-center">
+            <div className="mb-2 text-2xl">🔎</div>
+            <div className="text-sm font-semibold">1. Find an item</div>
+            <div className="mt-1 text-xs text-gray-300">Browse the raid drops list and pick what you need.</div>
+          </div>
+          <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-center">
+            <div className="mb-2 text-2xl">📝</div>
+            <div className="text-sm font-semibold">2. Send a request</div>
+            <div className="mt-1 text-xs text-gray-300">Enter the quantity and add your request. Leaders see this queue.</div>
+          </div>
+          <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-center">
+            <div className="mb-2 text-2xl">🎁</div>
+            <div className="text-sm font-semibold">3. Receive your loot</div>
+            <div className="mt-1 text-xs text-gray-300">Leaders assign items. Watch for updates and enjoy the spoils.</div>
+          </div>
+        </div>
       </section>
       {selectedId ? (
         <div>
