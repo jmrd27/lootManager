@@ -13,6 +13,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Hero replaced with a 3‑step guide (Find → Request → Receive).
   - Live search filters items as you type.
   - Single‑column toggle: selecting an item shows a full‑width Item Manager; back button returns to list.
+  - Mobile layout: card list on small screens; desktop keeps table.
   - Requested Qty shows a Tooltip listing unfulfilled requests in priority order (oldest first).
   - Leaders can inline‑edit item quantity directly in the list; auto‑saves (400ms debounce) and on blur.
   - Quick‑assign next to each request in Item Manager; leaders assign to a member with a tiny qty field + Assign button.
@@ -20,6 +21,15 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
 - Data flow:
   - Assigning creates an `assignments` row, decrements `items.quantity` (on‑hand), then decrements the source `request` by the assigned amount, deleting it when it reaches 0.
   - Requests list shows only unfulfilled demand; Summary tallies from assignments (unchanged).
+
+## Roles & Permissions
+
+- Roles: `member`, `item_manager`, `leader`.
+- Item Manager: may add items and update item quantities (cannot delete items).
+- Leader: all item manager permissions plus delete and admin controls.
+- Enforcement:
+  - UI: forms and inline edits are gated by `canManageItems` (leader or item manager).
+  - DB: RLS policies allow item managers to insert/update items; delete remains leader‑only.
 
 ## Environment / Deploy
 
@@ -32,6 +42,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
 - `requests(id, item_id, member_name, quantity, requester_id, created_at)` — unfulfilled demand only (decrement/delete on assign).
 - `assignments(id, item_id, assignee_id, assignee_name, quantity, assigned_by, created_at)` — history of delivered loot.
 - No `request_id` link on assignments yet (see TODOs).
+- `settings(id=1, requests_enabled boolean)` — global toggle for request creation.
 
 ## Open TODOs / Follow‑ups
 
@@ -42,9 +53,14 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
 - Tests: unit tests for store logic (decrementRequest, addAssignment side‑effects) and tooltip rendering.
 - Docs: README update for env setup and basic flows (leader vs member).
 
+## Migrations
+
+- We now track DB changes in `supabase/migrations/` with dated files.
+- Latest: `2025-09-12_item_manager_role.sql` — adds Item Manager role, helper, and item insert/update policies.
+- Apply missing migrations in Supabase SQL; snippets are idempotent and safe to re‑run.
+
 ## Known Notes / Caveats
 
 - Tooltip is portal‑based and auto‑flips above when there’s no space below; sorted by `createdAt` ascending.
 - Inline qty edit uses optimistic debounce; failed updates revert and alert.
 - If header emojis don’t render correctly on Vercel, switch to small SVGs.
-

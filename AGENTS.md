@@ -47,4 +47,6 @@ This repository hosts a small Vite + React app for organizing Lineage 2 raid bos
 ## Agent-Specific Notes
 - When modifying files, follow feature-first layout under `src/features/loot/`.
 - Do not alter unrelated code or tooling without an issue/discussion.
- - Never commit or push changes without explicit user approval. Always pause and ask before any `git commit` or `git push`.
+- Never commit or push changes without explicit user approval. Always pause and ask before any `git commit` or `git push`.
+ - Maintain `WORKING_NOTES.md` as a living summary of goals, decisions, and open TODOs. Update it alongside substantive changes.
+ - Track DB changes as dated SQL snippets under `supabase/migrations/` (idempotent, re-runnable). Prefer adding migrations over editing existing applied SQL.
