@@ -36,7 +36,7 @@ export const LatestRequests: React.FC<{ limit?: number }> = ({ limit = 8 }) => {
                     <div className="truncate text-sm font-medium">{r.memberName} x {r.quantity}</div>
                     <div className="truncate text-xs opacity-70">{r.itemName}</div>
                   </div>
-                  <div className="shrink-0 text-xs opacity-70">{new Date(r.createdAt).toLocaleString()}</div>
+                  <div className="shrink-0 text-xs opacity-70">{new Date(r.createdAt).toLocaleDateString()}</div>
                 </li>
               ))}
             </ul>
@@ -46,4 +46,3 @@ export const LatestRequests: React.FC<{ limit?: number }> = ({ limit = 8 }) => {
     </aside>
   );
 };
-

@@ -17,7 +17,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Requested Qty shows a Tooltip listing unfulfilled requests in priority order (oldest first).
   - Leaders can inline‑edit item quantity directly in the list; auto‑saves (400ms debounce) and on blur.
   - Quick-assign next to each request in Item Manager; leaders assign to a member with a tiny qty field + Assign button.
-  - Right sidebar shows Recent Assignments and, beneath it, Latest Requests (most recent first, limited to 8).
+  - Right sidebar shows Recent Assignments, Latest Requests, and Recent Item Changes (added or increased quantities), each limited to 8 and sorted newest first.
   - Number inputs sized for two digits, centered text, native steppers kept; padding adjusted so steppers sit at the right edge.
 - Data flow:
   - Assigning creates an `assignments` row, decrements `items.quantity` (on‑hand), then decrements the source `request` by the assigned amount, deleting it when it reaches 0.
@@ -57,7 +57,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
 ## Migrations
 
 - We now track DB changes in `supabase/migrations/` with dated files.
-- Latest: `2025-09-12_item_manager_role.sql` — adds Item Manager role, helper, and item insert/update policies.
+- Latest: `2025-09-14_item_events.sql` � adds persistent audit of item additions and quantity increases with trigger and RLS for read.
 - Apply missing migrations in Supabase SQL; snippets are idempotent and safe to re‑run.
 
 ## Known Notes / Caveats
