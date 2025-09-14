@@ -348,9 +348,9 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
             )}
           </div>
           <div className="space-y-4">
+            <RecentItemChanges />
             <RecentAssignments />
             <LatestRequests />
-            <RecentItemChanges />
           </div>
         </div>
       )}
