@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLoot } from '@/features/loot/store';
 import { useAuth } from '@/features/auth/store';
 import { computeSplit } from '@/features/loot/logic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
 
 export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = ({ id, onClose }) => {
   const { items, requests, assignments, removeRequest, updateItem, addAssignment, decrementRequest, requestsEnabled } = useLoot();
@@ -24,6 +25,46 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
   const getAssignQty = (reqId: string) => assignQty[reqId] ?? 1;
   const setAssignQtyFor = (reqId: string, val: number) =>
     setAssignQty((prev) => ({ ...prev, [reqId]: Math.max(1, val) }));
+  // Assign without an existing request
+  const [freeAssignName, setFreeAssignName] = useState('');
+  const [freeAssignQty, setFreeAssignQty] = useState(1);
+  const [nameSuggestOpen, setNameSuggestOpen] = useState(false);
+  const [allUsernames, setAllUsernames] = useState<string[]>([]);
+  // Load usernames for autocomplete (leader only); fallback to names from requests/assignments
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .order('username', { ascending: true });
+        if (!error && data && alive) {
+          setAllUsernames(
+            Array.from(new Set((data as any[]).map((r) => String(r.username)))).filter(Boolean)
+          );
+          return;
+        }
+      } catch {
+        // ignore and fallback
+      }
+      // Fallback: build from existing requests/assignments
+      if (!alive) return;
+      const set = new Set<string>();
+      myRequests.forEach((r) => set.add(r.memberName));
+      myAssignments.forEach((a) => set.add(a.assigneeName));
+      setAllUsernames(Array.from(set).sort((a, b) => a.localeCompare(b)));
+    };
+    if (isLeader) load();
+    return () => {
+      alive = false;
+    };
+  }, [isLeader, id]);
+  const filteredNames = useMemo(() => {
+    const q = freeAssignName.trim().toLowerCase();
+    if (!q) return allUsernames.slice(0, 12);
+    return allUsernames.filter((n) => n.toLowerCase().includes(q)).slice(0, 12);
+  }, [allUsernames, freeAssignName]);
 
   return (
     <aside>
@@ -90,6 +131,61 @@ export const ItemManagerCard: React.FC<{ id: string; onClose?: () => void }> = (
                 </li>
               ))}
             </ul>
+          )}
+
+          {isLeader && (
+            <div className="mt-5">
+              <h3 className="text-base font-semibold">Assign Without Request</h3>
+              <p className="mb-2 text-sm opacity-80">Directly assign this item to any member, even if they didn’t request it.</p>
+              <form
+                className="flex flex-wrap items-center gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const name = freeAssignName.trim();
+                  const qty = Math.min(Math.max(1, freeAssignQty), Math.max(0, remainingQty));
+                  if (!name || qty <= 0) return;
+                  await addAssignment({ itemId: id, assigneeName: name, quantity: qty });
+                  setFreeAssignQty(1);
+                  setFreeAssignName('');
+                }}
+              >
+                <div className="relative min-w-[200px] flex-1">
+                  <Input
+                    className="w-full"
+                    placeholder="Member name"
+                    value={freeAssignName}
+                    onChange={(e) => { setFreeAssignName(e.target.value); setNameSuggestOpen(true); }}
+                    onFocus={() => setNameSuggestOpen(true)}
+                    onBlur={() => setTimeout(() => setNameSuggestOpen(false), 150)}
+                    autoComplete="off"
+                  />
+                  {nameSuggestOpen && filteredNames.length > 0 && (
+                    <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+                      {filteredNames.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-700"
+                          onMouseDown={(e) => { e.preventDefault(); setFreeAssignName(n); setNameSuggestOpen(false); }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Input
+                  className="w-24"
+                  type="number"
+                  min={1}
+                  max={remainingQty}
+                  value={freeAssignQty}
+                  onChange={(e) => setFreeAssignQty(parseInt(e.target.value || '1', 10))}
+                />
+                <Button type="submit" disabled={remainingQty <= 0}>Assign</Button>
+                {remainingQty <= 0 && <span className="text-xs opacity-70">No quantity remaining</span>}
+              </form>
+            </div>
           )}
 
           <h3 className="mt-5 text-base font-semibold">Suggested Split</h3>
