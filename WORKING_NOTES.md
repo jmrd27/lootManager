@@ -16,7 +16,8 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Mobile layout: card list on small screens; desktop keeps table.
   - Requested Qty shows a Tooltip listing unfulfilled requests in priority order (oldest first).
   - Leaders can inline‑edit item quantity directly in the list; auto‑saves (400ms debounce) and on blur.
-  - Quick‑assign next to each request in Item Manager; leaders assign to a member with a tiny qty field + Assign button.
+  - Quick-assign next to each request in Item Manager; leaders assign to a member with a tiny qty field + Assign button.
+  - Right sidebar shows Recent Assignments and, beneath it, Latest Requests (most recent first, limited to 8).
   - Number inputs sized for two digits, centered text, native steppers kept; padding adjusted so steppers sit at the right edge.
 - Data flow:
   - Assigning creates an `assignments` row, decrements `items.quantity` (on‑hand), then decrements the source `request` by the assigned amount, deleting it when it reaches 0.

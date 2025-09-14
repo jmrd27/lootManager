@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RecentAssignments } from '@/features/assignments/RecentAssignments';
 import { ItemManagerCard } from '@/features/items/ItemManagerCard';
+import { LatestRequests } from '@/features/requests/LatestRequests';
 import { Tooltip } from '@/components/ui/tooltip';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
@@ -345,7 +346,10 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
               </>
             )}
           </div>
-          <RecentAssignments />
+          <div className="space-y-4">
+            <RecentAssignments />
+            <LatestRequests />
+          </div>
         </div>
       )}
     </div>
