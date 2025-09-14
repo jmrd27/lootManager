@@ -9,6 +9,7 @@ import { ItemManagerCard } from '@/features/items/ItemManagerCard';
 import { LatestRequests } from '@/features/requests/LatestRequests';
 import { Tooltip } from '@/components/ui/tooltip';
 import { RecentItemChanges } from '@/features/items/RecentItemChanges';
+import { MyRequests } from '@/features/requests/MyRequests';
 
 export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
   const { items, addItem, removeItem, requests, addRequest, updateItem, requestsEnabled } = useLoot();
@@ -349,6 +350,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
           </div>
           <div className="space-y-4">
             <RecentItemChanges />
+            <MyRequests />
             <RecentAssignments />
             <LatestRequests />
           </div>
