@@ -29,8 +29,11 @@ set search_path = public
 as $$
 begin
   if tg_op = 'INSERT' then
-    insert into public.item_events (item_id, item_name, type, amount, new_qty, created_at)
-    values (new.id, new.name, 'added', coalesce(new.quantity, 0), coalesce(new.quantity, 0), new.created_at);
+    -- Skip logging when starting quantity is zero to avoid noisy events
+    if coalesce(new.quantity, 0) > 0 then
+      insert into public.item_events (item_id, item_name, type, amount, new_qty, created_at)
+      values (new.id, new.name, 'added', coalesce(new.quantity, 0), coalesce(new.quantity, 0), new.created_at);
+    end if;
     return new;
   elsif tg_op = 'UPDATE' then
     if coalesce(new.quantity, 0) > coalesce(old.quantity, 0) then
@@ -54,4 +57,3 @@ begin
     for each row execute function public.log_item_events();
   end if;
 end $$;
-
