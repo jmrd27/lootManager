@@ -23,7 +23,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
 
   const onAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || qty <= 0) return;
+    if (!name.trim() || qty < 0) return;
     addItem({ name: name.trim(), quantity: qty, dateISO: date });
     setName('');
     setQty(1);
@@ -183,7 +183,7 @@ export const ItemsView: React.FC<{ openItem?: (id: string) => void }> = () => {
                     </div>
                   )}
                 </div>
-                <Input className="w-full sm:w-28" type="number" min={1} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
+                <Input className="w-full sm:w-28" type="number" min={0} value={qty} onChange={(e) => setQty(parseInt(e.target.value || '0', 10))} />
                 <Input className="w-full sm:w-auto" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 <Button className="w-full sm:w-auto" type="submit">Add New Item</Button>
               </form>

@@ -16,7 +16,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Mobile layout: card list on small screens; desktop keeps table.
   - Requested Qty shows a Tooltip listing unfulfilled requests in priority order (oldest first).
   - Leaders can inline‑edit item quantity directly in the list; auto‑saves (400ms debounce) and on blur.
-  - Quick-assign next to each request in Item Manager; leaders assign to a member with a tiny qty field + Assign button.
+  - Quick-assign next to each request in Item Manager; leaders can also assign directly to any member without a prior request.
   - Right sidebar shows Recent Item Changes, My Requests, Recent Assignments, and Latest Requests; each limited to 8 and sorted newest first.
   - Number inputs sized for two digits, centered text, native steppers kept; padding adjusted so steppers sit at the right edge.
 - Data flow:
@@ -26,7 +26,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
 ## Roles & Permissions
 
 - Roles: `member`, `item_manager`, `leader`.
-- Item Manager: may add items and update item quantities (cannot delete items).
+- Item Manager: may add items (including 0 quantity) and update item quantities (cannot delete items).
 - Leader: all item manager permissions plus delete and admin controls.
 - Enforcement:
   - UI: forms and inline edits are gated by `canManageItems` (leader or item manager).
