@@ -23,6 +23,8 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Assigning creates an `assignments` row, decrements `items.quantity` (on‑hand), then decrements the source `request` by the assigned amount, deleting it when it reaches 0.
   - Requests list shows only unfulfilled demand; Summary tallies from assignments (unchanged).
 
+- Summary view: Assignments Snapshot card aggregates per-member totals with filterable time ranges (1/3/6/12 months or All time), per-item badges, and explainer copy visible to all approved members.
+
 ## Roles & Permissions
 
 - Roles: `member`, `item_manager`, `leader`.
