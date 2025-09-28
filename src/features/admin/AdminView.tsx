@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth, Profile } from '@/features/auth/store';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLoot } from '@/features/loot/store';
 
@@ -26,7 +27,9 @@ export const AdminView: React.FC = () => {
     setLoading(false);
   };
 
-  useMemo(() => { if (isLeader) load(); }, [isLeader]);
+  useMemo(() => {
+    if (isLeader) load();
+  }, [isLeader]);
 
   if (!isLeader) return <p className="text-sm opacity-80">Admins only.</p>;
 
@@ -53,7 +56,6 @@ export const AdminView: React.FC = () => {
                   .eq('id', 1);
                 setSavingSettings(false);
                 if (error) {
-                  // revert optimistic update
                   setEffectiveEnabled(!next);
                   alert(`Failed to update setting: ${error.message}`);
                 }
@@ -65,11 +67,13 @@ export const AdminView: React.FC = () => {
         </div>
       </div>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Admin · Users</h2>
-        <Button variant="outline" onClick={load} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</Button>
+        <h2 className="text-lg font-semibold">Admin &gt; Users</h2>
+        <Button variant="outline" onClick={load} disabled={loading}>
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </Button>
       </div>
       {!profiles ? (
-        <p className="text-sm opacity-80">Loading users…</p>
+        <p className="text-sm opacity-80">Loading users...</p>
       ) : profiles.length === 0 ? (
         <p className="text-sm opacity-80">No users yet.</p>
       ) : (
@@ -89,8 +93,8 @@ export const AdminView: React.FC = () => {
                 p={p}
                 leadersCount={profiles.filter((x) => x.role === 'leader' && x.approved).length}
                 currentUserId={session?.user.id || ''}
-                onSaved={(np) => setProfiles((prev) => prev ? prev.map(x => x.id === np.id ? np : x) : prev)}
-                onDeleted={(id) => setProfiles((prev) => prev ? prev.filter(x => x.id !== id) : prev)}
+                onSaved={(np) => setProfiles((prev) => (prev ? prev.map((x) => (x.id === np.id ? np : x)) : prev))}
+                onDeleted={(id) => setProfiles((prev) => (prev ? prev.filter((x) => x.id !== id) : prev))}
                 savingId={savingId}
                 setSavingId={setSavingId}
               />
@@ -102,10 +106,38 @@ export const AdminView: React.FC = () => {
   );
 };
 
-const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: string; onSaved: (p: Profile) => void; onDeleted: (id: string) => void; savingId: string | null; setSavingId: (id: string | null) => void }> = ({ p, leadersCount, currentUserId, onSaved, onDeleted, savingId, setSavingId }) => {
+const AdminRow: React.FC<{
+  p: Profile;
+  leadersCount: number;
+  currentUserId: string;
+  onSaved: (p: Profile) => void;
+  onDeleted: (id: string) => void;
+  savingId: string | null;
+  setSavingId: (id: string | null) => void;
+}> = ({ p, leadersCount, currentUserId, onSaved, onDeleted, savingId, setSavingId }) => {
   const [role, setRole] = useState<Profile['role']>(p.role);
   const [approved, setApproved] = useState<boolean>(p.approved);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetStatus, setResetStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [resetSaving, setResetSaving] = useState(false);
   const saving = savingId === p.id;
+  const busy = saving || resetSaving;
+
+  const openReset = () => {
+    setResetStatus(null);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetOpen(true);
+  };
+
+  const closeReset = () => {
+    setResetOpen(false);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetStatus(null);
+  };
 
   const save = async () => {
     const wasLeader = p.role === 'leader' && p.approved === true;
@@ -156,11 +188,40 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
     onDeleted(p.id);
   };
 
+  const handlePasswordReset = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setResetStatus(null);
+    if (newPassword.length < 8) {
+      setResetStatus({ type: 'error', message: 'Password must be at least 8 characters.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetStatus({ type: 'error', message: 'Passwords must match.' });
+      return;
+    }
+
+    setResetSaving(true);
+    const { error } = await supabase.rpc('admin_set_password', { target_user: p.id, new_password: newPassword });
+    setResetSaving(false);
+    if (error) {
+      setResetStatus({ type: 'error', message: error.message });
+      return;
+    }
+
+    setResetStatus({ type: 'success', message: 'Password updated.' });
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
   return (
     <TableRow>
       <TableCell>{p.username}</TableCell>
       <TableCell>
-        <select value={role} onChange={(e) => setRole(e.target.value as Profile['role'])} className="rounded-md border border-gray-800 bg-gray-900/60 px-2 py-1 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand-600">
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as Profile['role'])}
+          className="rounded-md border border-gray-800 bg-gray-900/60 px-2 py-1 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand-600"
+        >
           <option value="member">member</option>
           <option value="item_manager">item_manager</option>
           <option value="leader">leader</option>
@@ -172,12 +233,57 @@ const AdminRow: React.FC<{ p: Profile; leadersCount: number; currentUserId: stri
           <span>Approved</span>
         </label>
       </TableCell>
-      <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-2">
-          <Button disabled={saving} onClick={save}>
-            {saving ? 'Saving…' : 'Save'}
-          </Button>
-          <Button disabled={saving} variant="destructive" onClick={doDelete}>Delete</Button>
+      <TableCell className="text-right align-top">
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button type="button" disabled={busy} onClick={save}>
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button type="button" disabled={busy} variant="destructive" onClick={doDelete}>
+              Delete
+            </Button>
+            <Button
+              type="button"
+              variant={resetOpen ? 'secondary' : 'outline'}
+              disabled={resetSaving}
+              onClick={() => (resetOpen ? closeReset() : openReset())}
+            >
+              {resetOpen ? 'Cancel reset' : 'Reset password'}
+            </Button>
+          </div>
+          {resetOpen && (
+            <form onSubmit={handlePasswordReset} className="w-full max-w-xs space-y-2">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                autoComplete="new-password"
+                disabled={resetSaving}
+              />
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                autoComplete="new-password"
+                disabled={resetSaving}
+              />
+              {resetStatus && (
+                <p className={`text-xs ${resetStatus.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {resetStatus.message}
+                </p>
+              )}
+              <div className="flex items-center justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={closeReset} disabled={resetSaving}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="secondary" disabled={resetSaving}>
+                  {resetSaving ? 'Updating...' : 'Set password'}
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </TableCell>
     </TableRow>

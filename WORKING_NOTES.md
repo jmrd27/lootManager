@@ -24,6 +24,7 @@ Purpose: Persistent, high‑level notes to retain context as chat context expire
   - Requests list shows only unfulfilled demand; Summary tallies from assignments (unchanged).
 
 - Summary view: Assignments Snapshot card aggregates per-member totals with filterable time ranges (1/3/6/12 months or All time), per-item badges, and explainer copy visible to all approved members.
+- Admin view: Leaders can reset member passwords via inline form (requires new passwords >= 8 chars).
 
 ## Roles & Permissions
 
