@@ -10,7 +10,7 @@ export const PendingPage: React.FC = () => {
         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold">WP</div>
         <h1 className="text-3xl font-extrabold tracking-tight">Account Pending Approval</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-gray-300">
-          Your account was created successfully, but it must be approved by a leader before you can access WarPigs Loot Manager. Please contact a leader to finish setup.
+          Your account was created successfully, but it must be approved by a leader before you can access EternalBite Loot Manager. Please contact a leader to finish setup.
         </p>
         <div className="mt-8">
           <Button variant="outline" onClick={() => signOut()}>Sign out</Button>

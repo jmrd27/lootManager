@@ -28,7 +28,7 @@ export const AuthPage: React.FC = () => {
       <div className="w-full rounded-xl border border-gray-800 bg-gray-900/70 p-6 shadow">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold">WP</div>
-          <h1 className="text-2xl font-bold tracking-tight">WarPigs Loot Manager</h1>
+          <h1 className="text-2xl font-bold tracking-tight">EternalBite Loot Manager</h1>
           <p className="mt-1 text-sm opacity-80">Sign in to continue</p>
         </div>
         <form onSubmit={submit} className="flex flex-col gap-3">
